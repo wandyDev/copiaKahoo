@@ -3,7 +3,7 @@ import { Server, Socket } from 'socket.io';
 import { GameGatewayService } from './game-gateway.service';
 import { start } from 'repl';
 
-@WebSocketGateway(4000, { namespace: 'game-gateway', cors: "localhost:3000", credentials: true })
+@WebSocketGateway({ namespace: 'game-gateway', cors: "localhost:3000", credentials: true })
 export class GameGatewayGateway {
   @WebSocketServer()
   server!: Server
