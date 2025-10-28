@@ -89,5 +89,25 @@ export class GameGatewayService {
 
     }
   }
-
+  //cerrar sala
+  async CloseSala(codigo: string, jugadorId: number) {
+    //objeto con las funciones de borrado
+    const deleteData = {
+      deleteJugadores: await this.prisma.jugador.deleteMany({ where: { salaId: jugadorId } }),
+      deleteSala: await this.prisma.sala.delete({ where: { codigo: codigo } })
+    }
+    //verificamos que la sala exista
+    const verify = await this.prisma.sala.findUnique({ where: { codigo: codigo } })
+    if (!verify) {
+      return { access: false }
+    }
+    //verificamos que la sala no tenga jugadores
+    const verifiUsers = await this.prisma.jugador.findMany({ where: { salaId: verify.id } })
+    if (verifiUsers) {
+      return { access: false }
+    }
+    deleteData.deleteJugadores = await this.prisma.jugador.deleteMany({ where: { salaId: jugadorId } })
+    deleteData.deleteSala = await this.prisma.sala.delete({ where: { codigo: codigo } })
+    return { access: true }
+  }
 }

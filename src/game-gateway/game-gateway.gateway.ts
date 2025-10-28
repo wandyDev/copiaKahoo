@@ -1,9 +1,8 @@
 import { WebSocketGateway, SubscribeMessage, MessageBody, WebSocketServer, ConnectedSocket, } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { GameGatewayService } from './game-gateway.service';
-import { start } from 'repl';
 
-@WebSocketGateway({ namespace: 'game-gateway', cors: "localhost:3000", credentials: true })
+@WebSocketGateway({ namespace: 'game-gateway', cors: "localhost:3000", credentials: false })
 export class GameGatewayGateway {
   @WebSocketServer()
   server!: Server
@@ -37,6 +36,23 @@ export class GameGatewayGateway {
       this.server.to(data.room).emit("jugador_unido", { nombreJugador: jugadorNombre, nombreSala: nombreSala });
     } catch (error) {
       //mostramos el error
+      console.log(error);
+      socket.emit("error", "codigo incorrecto o sala inexistente")
+    }
+  }
+  //metodo para salir de la sala
+  @SubscribeMessage("offRoom")
+  async offRoom(@ConnectedSocket() socket: Socket) {
+    try {
+      //cerramos la sala
+      const deleteData = await this.gameGatewayService.CloseSala(socket.data.room, socket.data.jugadorId);
+      //si la sala no existe enviamos un error
+      if (!deleteData) {
+        return socket.emit("error", { code: "ROOM_NOT_FOUND", message: "codigo incorrecto o sala inexistente" })
+      }
+      //cerramos la sala
+      socket.in(socket.data.room).socketsLeave(socket.data.room);
+    } catch (error) {
       console.log(error);
       socket.emit("error", "codigo incorrecto o sala inexistente")
     }
