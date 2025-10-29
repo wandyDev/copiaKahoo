@@ -67,18 +67,22 @@ export class GameGatewayService {
     if (!verify) {
       return { access: false }
     }
+    // filtramos las preguntas
     const preguntas = await this.prisma.pregunta.findMany({ where: { salaId: verify.id } })
-
+    //si no hay preguntas devolvemos un error
     if (preguntas.length === 0) {
       return { access: false }
     }
 
+
+    //iteramos sobre el arrg de preguntas
     const preguntasFiltradas = preguntas.map(pregunta => {
+      //por cada valor creamos un objeto con el id y la pregunta
       const texto = {
         id: pregunta.id,
         pregunta: pregunta.texto
       }
-
+      //retornamos el objto
       return texto
     })
     //damos acceso
@@ -89,6 +93,7 @@ export class GameGatewayService {
 
     }
   }
+
   //cerrar sala
   async CloseSala(codigo: string, jugadorId: number) {
     //objeto con las funciones de borrado
@@ -97,17 +102,26 @@ export class GameGatewayService {
       deleteSala: await this.prisma.sala.delete({ where: { codigo: codigo } })
     }
     //verificamos que la sala exista
-    const verify = await this.prisma.sala.findUnique({ where: { codigo: codigo } })
+    const verify = await this.prisma.sala.findUnique({
+      where: { codigo: codigo, },
+      include: {
+        jugadores: true
+      }
+    })
+    //si  la sala no existe devolvemos un error
     if (!verify) {
       return { access: false }
     }
-    //verificamos que la sala no tenga jugadores
-    const verifiUsers = await this.prisma.jugador.findMany({ where: { salaId: verify.id } })
-    if (verifiUsers) {
-      return { access: false }
+
+    //condicionamos "si la sala tiene jugadores entonces lo eliminamos"
+
+    if (verify.jugadores) {
+      deleteData.deleteJugadores = await this.prisma.jugador.deleteMany({ where: { salaId: jugadorId } })
     }
-    deleteData.deleteJugadores = await this.prisma.jugador.deleteMany({ where: { salaId: jugadorId } })
+    //eliminamos la sala
+
     deleteData.deleteSala = await this.prisma.sala.delete({ where: { codigo: codigo } })
+    //damos acceso
     return { access: true }
   }
 }

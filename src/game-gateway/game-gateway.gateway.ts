@@ -99,6 +99,4 @@ export class GameGatewayGateway {
       socket.emit("error", "sala inexistente o pregunta inexistente")
     }
   }
-
-
 }
